@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "createcockwork:brass_gearbox"
+    }
+  ],
+  "result": {
+    "item": "createcockwork:vertical_brass_gearbox"
+  }
+}

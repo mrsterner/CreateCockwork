@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "createcockwork:copper_gearbox"
+    }
+  ],
+  "result": {
+    "item": "createcockwork:vertical_copper_gearbox"
+  }
+}
