@@ -5,6 +5,8 @@ import com.jozufozu.flywheel.backend.instancing.entity.EntityInstance;
 import com.jozufozu.flywheel.util.AnimationTickHolder;
 import com.jozufozu.flywheel.util.transform.TransformStack;
 import com.jozufozu.flywheel.vanilla.MinecartInstance;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -28,12 +30,12 @@ public abstract class MixinMinecartInstance extends EntityInstance {
         super(materialManager, entity);
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "beginFrame", at = @At(value = "INVOKE",
             target = "Lcom/jozufozu/flywheel/util/transform/TransformStack;translate(DDD)Ljava/lang/Object;", ordinal = 0),
             remap = false
     )
-    private Object redirectTranslate(TransformStack instance, double x, double y, double z) {
+    private Object redirectTranslate(TransformStack instance, double x, double y, double z, Operation<Void> operation) {
         final float partialTicks = AnimationTickHolder.getPartialTicks();
         if (VSGameUtilsKt.getShipManaging(entity) instanceof ClientShip ship) {
             final Vector3d origin = VectorConversionsMCKt.toJOMLD(materialManager.getOriginCoordinate());
@@ -54,7 +56,7 @@ public abstract class MixinMinecartInstance extends EntityInstance {
 
             ((PoseStack) instance).last().pose().set(VectorConversionsMCKt.mul(renderMatrix, v));
         } else {
-            instance.translate(x, y, z);
+            return operation.call(instance, x, y, z);
         }
         return null;
     }

@@ -1,6 +1,8 @@
 package dev.sterner.createcockwork.mixins.create.client;
 
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.contraptions.glue.SuperGlueSelectionHandler;
 import com.simibubi.create.foundation.utility.RaycastHelper;
 import net.minecraft.client.Minecraft;
@@ -31,7 +33,7 @@ public abstract class MixinSuperGlueSelectionHandler {
     public MixinSuperGlueSelectionHandler() {
     }
 
-    @Redirect(
+    @WrapOperation(
             method = {"tick"},
             at = @At(
                     value = "INVOKE",
@@ -39,7 +41,7 @@ public abstract class MixinSuperGlueSelectionHandler {
             ),
             remap = false
     )
-    private Vec3 redirectGetTraceOrigin(Player playerIn) {
+    private Vec3 redirectGetTraceOrigin(Player playerIn, Operation<Vec3> operation) {
         Minecraft mc = Minecraft.getInstance();
         double range = playerIn.getAttribute(ForgeMod.ENTITY_REACH.get()).getValue() + 1.0;
         Vec3 origin = RaycastHelper.getTraceOrigin(playerIn);
@@ -61,10 +63,11 @@ public abstract class MixinSuperGlueSelectionHandler {
                 tempQuat.transform(offset);
                 target = origin.add(VectorConversionsMCKt.toMinecraft(offset));
             }
+            this.newTarget = target;
+            return origin;
         }
 
-        this.newTarget = target;
-        return origin;
+        return operation.call(playerIn);
     }
 
     @Redirect(

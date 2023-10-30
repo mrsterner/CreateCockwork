@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create.packets;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.contraptions.actors.trainControls.ControlsInputPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Position;
@@ -18,20 +20,21 @@ public abstract class MixinControlsInputPacket {
     @Unique
     private Level level;
 
-    @Redirect(
+    @WrapOperation(
             method = "lambda$handle$0",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/phys/Vec3;closerThan(Lnet/minecraft/core/Position;D)Z"
             )
     )
-    private boolean b$redirectCloserThan(final Vec3 instance, final Position arg, final double d) {
-        Vec3 newVec3 = instance;
+    private boolean b$redirectCloserThan(final Vec3 instance, final Position arg, final double d, Operation<Boolean> operation) {
+        Vec3 newVec3;
         if (VSGameUtilsKt.isBlockInShipyard(this.level, new BlockPos((int) instance.x, (int) instance.y, (int) instance.z))) {
             final Ship ship = VSGameUtilsKt.getShipManagingPos(this.level, instance);
             newVec3 = VSGameUtilsKt.toWorldCoordinates(ship, instance);
+            return newVec3.closerThan(arg, d);
         }
-        return newVec3.closerThan(arg, d);
+        return operation.call(instance, arg, d);
     }
 
     @Redirect(

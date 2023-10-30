@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create.block;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.kinetics.crusher.CrushingWheelBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -31,51 +33,55 @@ public class MixinCrushingWheelBlock {
         levelInside = worldIn;
     }
 
-    @Unique
-    void transform(final Vector3d in) {
-        final Ship ship = VSGameUtilsKt.getShipManagingPos(levelInside, blockPosInside);
-        if (ship != null) {
-            ship.getWorldToShip().transformPosition(in);
-        }
-    }
-
-    @Redirect(
+    @WrapOperation(
             method = "entityInside",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/Entity;getX()D"
             )
     )
-    double getXPos(final Entity entity) {
+    double getXPos(final Entity entity, Operation<Double> operation) {
         final Vector3d vector3d = new Vector3d(entity.getX(), entity.getY(), entity.getZ());
-        transform(vector3d);
-        return vector3d.x;
+        final Ship ship = VSGameUtilsKt.getShipManagingPos(levelInside, blockPosInside);
+        if (ship != null) {
+            ship.getWorldToShip().transformPosition(vector3d);
+            return vector3d.x;
+        }
+        return operation.call(entity);
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "entityInside",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/Entity;getY()D"
             )
     )
-    double getYPos(final Entity entity) {
+    double getYPos(final Entity entity, Operation<Double> operation) {
         final Vector3d vector3d = new Vector3d(entity.getX(), entity.getY(), entity.getZ());
-        transform(vector3d);
-        return vector3d.x;
+        final Ship ship = VSGameUtilsKt.getShipManagingPos(levelInside, blockPosInside);
+        if (ship != null) {
+            ship.getWorldToShip().transformPosition(vector3d);
+            return vector3d.x;
+        }
+        return operation.call(entity);
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "entityInside",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/entity/Entity;getZ()D"
             )
     )
-    double getZPos(final Entity entity) {
+    double getZPos(final Entity entity, Operation<Double> operation) {
         final Vector3d vector3d = new Vector3d(entity.getX(), entity.getY(), entity.getZ());
-        transform(vector3d);
-        return vector3d.x;
+        final Ship ship = VSGameUtilsKt.getShipManagingPos(levelInside, blockPosInside);
+        if (ship != null) {
+            ship.getWorldToShip().transformPosition(vector3d);
+            return vector3d.x;
+        }
+        return operation.call(entity);
     }
 
 }

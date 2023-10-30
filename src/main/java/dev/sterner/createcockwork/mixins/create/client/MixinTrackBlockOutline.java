@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create.client;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.trains.track.TrackBlockOutline;
 import com.simibubi.create.foundation.utility.RaycastHelper;
 import net.minecraft.client.Minecraft;
@@ -46,14 +48,14 @@ public class MixinTrackBlockOutline {
         }
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "pickCurves()V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/player/LocalPlayer;getEyePosition(F)Lnet/minecraft/world/phys/Vec3;"
             )
     )
-    private static Vec3 redirectedOrigin(final LocalPlayer instance, final float v) {
+    private static Vec3 redirectedOrigin(final LocalPlayer instance, final float v, Operation<Vec3> operation) {
         final Vec3 eyePos = instance.getEyePosition(v);
         if (isShip) {
             final List<Vector3d>
@@ -64,11 +66,11 @@ public class MixinTrackBlockOutline {
             final Vector3d tempVec = ships.get(0);
             return new Vec3(tempVec.x, tempVec.y, tempVec.z);
         } else {
-            return eyePos;
+            return operation.call(instance, v);
         }
     }
 
-    @Redirect(
+    @WrapOperation(
             method = "pickCurves()V",
             at = @At(
                     value = "INVOKE",
@@ -76,11 +78,11 @@ public class MixinTrackBlockOutline {
             ),
             remap = false
     )
-    private static Vec3 redirectedTarget(final Player playerIn, final double range, final Vec3 origin) {
+    private static Vec3 redirectedTarget(final Player playerIn, final double range, final Vec3 origin, Operation<Vec3> operation) {
         if (isShip) {
             return new Vec3(shipBlockPos.getX(), shipBlockPos.getY(), shipBlockPos.getZ());
         } else {
-            return RaycastHelper.getTraceTarget(playerIn, range, origin);
+            return operation.call(playerIn, range, origin);
         }
     }
 }

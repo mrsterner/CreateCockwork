@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
 import com.simibubi.create.content.contraptions.bearing.BearingContraption;
@@ -24,7 +26,7 @@ public abstract class MixinControlledContraptionEntity extends AbstractContrapti
         super(entityTypeIn, worldIn);
     }
 
-    @Redirect(
+    @WrapOperation(//TODO this does nothing
             method = {"shouldActorTrigger"},
             at = @At(
                     value = "FIELD",
@@ -33,7 +35,7 @@ public abstract class MixinControlledContraptionEntity extends AbstractContrapti
             ),
             remap = false
     )
-    private void redirectPutMotion(MovementContext instance, Vec3 value) {
+    private void redirectPutMotion(MovementContext instance, Vec3 value, Operation<Void> operation) {
         BearingContraption bc = (BearingContraption) this.contraption;
         Direction facing = bc.getFacing();
         Vec3i dir = facing.getNormal();

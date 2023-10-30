@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.redstone.link.IRedstoneLinkable;
 import com.simibubi.create.content.redstone.link.RedstoneLinkNetworkHandler;
 import net.minecraft.core.BlockPos;
@@ -23,14 +25,14 @@ public abstract class MixinRedstoneLinkNetworkHandler {
     @Unique
     private static Level harvestedWorld;
 
-    @Redirect(
+    @WrapOperation(
             method = "withinRange",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z"
             )
     )
-    private static boolean f$redirectCloserThan(BlockPos instance, Vec3i vec3i, double v) {
+    private static boolean f$redirectCloserThan(BlockPos instance, Vec3i vec3i, double v, Operation<Boolean> operation) {
         Ship ship1 = VSGameUtilsKt.getShipManagingPos(harvestedWorld, instance);
         Ship ship2 = VSGameUtilsKt.getShipManagingPos(harvestedWorld, new BlockPos(vec3i));
         Vec3 pos1 = Vec3.atLowerCornerOf(instance);
@@ -41,6 +43,11 @@ public abstract class MixinRedstoneLinkNetworkHandler {
         if (ship2 != null) {
             pos2 = VectorConversionsMCKt.toMinecraft(ship2.getShipToWorld().transformPosition(VectorConversionsMCKt.toJOML(pos2)));
         }
+
+        if (ship2 == null && ship1 == null) {
+            return operation.call(instance, vec3i, v);
+        }
+
         return pos1.closerThan(pos2, v);
     }
 

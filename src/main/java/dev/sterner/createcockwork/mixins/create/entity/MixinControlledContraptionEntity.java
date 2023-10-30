@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create.entity;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
 import com.simibubi.create.content.contraptions.IControlContraption;
@@ -32,8 +34,8 @@ public abstract class MixinControlledContraptionEntity extends AbstractContrapti
         return vec3;
     }
 
-    @Redirect(method = "shouldActorTrigger", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;equals(Ljava/lang/Object;)Z"))
-    private boolean redirectEquals(Vec3 instance, Object vec3) {
+    @WrapOperation(method = "shouldActorTrigger", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;equals(Ljava/lang/Object;)Z"))//TODO wrapop doesnt do anything here
+    private boolean redirectEquals(Vec3 instance, Object vec3, Operation<Boolean> operation) {
         Vec3 other = (Vec3) vec3;
         other = flatten(other);
         instance = flatten(instance);

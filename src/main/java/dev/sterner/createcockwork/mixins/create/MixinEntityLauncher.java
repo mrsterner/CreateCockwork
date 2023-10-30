@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.logistics.depot.EntityLauncher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -33,19 +35,17 @@ public abstract class MixinEntityLauncher {
         return new Vec3(launcher.getX() + .5, launcher.getY() + .5, launcher.getZ() + .5);
     }
 
-    @Redirect(method = "applyMotion", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setDeltaMovement(DDD)V"))
-    private void redirectSetDeltaMovement(Entity instance, double x, double y, double z) {
-        instance.setDeltaMovement(outMotion(instance, new Vec3(x, y, z)));
-    }
-
-    @Unique
-    private Vec3 outMotion(Entity entity, Vec3 motion) {
-        Ship ship = VSGameUtilsKt.getShipManagingPos(entity.level(), entity.getOnPos());
+    @WrapOperation(method = "applyMotion", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setDeltaMovement(DDD)V"))
+    private void redirectSetDeltaMovement(Entity instance, double x, double y, double z, Operation<Void> operation) {
+        Ship ship = VSGameUtilsKt.getShipManagingPos(instance.level(), instance.getOnPos());
         if (ship != null) {
+            var motion = new Vec3(x, y, z);
             Vector3d tempVec = VectorConversionsMCKt.toJOML(motion);
             ship.getTransform().getShipToWorld().transformDirection(tempVec);
             motion = VectorConversionsMCKt.toMinecraft(tempVec);
+            instance.setDeltaMovement(motion);
+        } else {
+            operation.call(instance, x, y, z);
         }
-        return motion;
     }
 }

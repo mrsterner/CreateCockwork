@@ -33,7 +33,6 @@
     "create.blockentity.MixinCrushingWheelControllerTileEntity",
     "create.blockentity.MixinEjectorTileEntity",
     "create.blockentity.MixinEncasedFanTileEntity",
-
     "create.entity.MixinAbstractContraptionEntity",
     "create.entity.MixinCarriageContraptionEntity",
     "create.entity.MixinControlledContraptionEntity",
@@ -56,23 +55,6 @@
     "create.client.MixinContraptionRenderDispatcher",
     "create.client.MixinContraptionRenderInfo",
     "create.client.MixinFilteringRenderer",
-    "create.client.MixinGhostBlockRenderer",
-    "create.client.MixinLinkRenderer",
-    "create.client.MixinMinecartInstance",
-    "create.client.MixinMultiplePlacementHelpers",
-    "create.client.MixinOrientedContraptionEntity",
-    "create.client.MixinOutline",
-    "create.client.MixinPlacementHelpers",
-    "create.client.MixinSoundScapes",
-    "create.client.MixinTileEntityRenderHelper",
-    "create.client.MixinTrackBlockOutline",
-    "create.client.MixinTrainRelocator",
-    "create.client.MixinCarriageContraptionInstance",
-    "create.client.MixinCogwheelBlockItem",
-    "create.client.MixinCogwheelBlockItemHitOnShaft",
-
-    "create.client.MixinContraptionRenderInfo",
-    "create.client.MixinFilteringRenderer",
     "create.client.MixinFlwContraption",
     "create.client.MixinGhostBlockRenderer",
     "create.client.MixinLinkRenderer",
@@ -83,7 +65,10 @@
     "create.client.MixinPlacementHelpers",
     "create.client.MixinSoundScapes",
     "create.client.MixinSuperGlueSelectionHandler",
-    "create.client.MixinValueBox",
+    "create.client.MixinTileEntityRenderHelper",
+    "create.client.MixinTrackBlockOutline",
+    "create.client.MixinTrainRelocator",
+    "create.client.MixinValueBox"
   ],
   "injectors": {
     "defaultRequire": 1

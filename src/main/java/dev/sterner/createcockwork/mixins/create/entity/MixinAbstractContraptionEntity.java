@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create.entity;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.contraptions.Contraption;
@@ -37,7 +39,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
@@ -192,7 +193,7 @@ public abstract class MixinAbstractContraptionEntity extends Entity implements M
     }
 
     @Unique
-    private BlockPos getTargetPos(MovementBehaviour instance, MovementContext context, BlockPos pos, StructureTemplate.StructureBlockInfo blockInfo) {
+    private void getTargetPos(MovementBehaviour instance, MovementContext context, BlockPos pos, StructureTemplate.StructureBlockInfo blockInfo, Operation<Void> operation) {
         if (shouldMod(instance) && context.world.getBlockState(pos).isAir() && VSGameUtilsKt.isBlockInShipyard(context.world, pos)) {
             Ship ship = VSGameUtilsKt.getShipManagingPos(context.world, pos);
             if (ship != null) {
@@ -224,16 +225,21 @@ public abstract class MixinAbstractContraptionEntity extends Entity implements M
                                 .lineWidth(2 / 16f);
                     }
                 }
-                if (check)
+                if (check) {
                     pos = blockPos;
+                    instance.visitNewPosition(context, pos);
+                    return;
+                }
+
             }
         }
-        return pos;
+
+        operation.call(instance, context, pos);
     }
 
-    @Redirect(remap = false, method = "tickActors", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/contraptions/behaviour/MovementBehaviour;visitNewPosition(Lcom/simibubi/create/content/contraptions/behaviour/MovementContext;Lnet/minecraft/core/BlockPos;)V"))
-    private void redirectVisitNewPosition(MovementBehaviour instance, MovementContext context, BlockPos pos) {
-        instance.visitNewPosition(context, getTargetPos(instance, context, pos, structureBlockInfo));
+    @WrapOperation(remap = false, method = "tickActors", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/contraptions/behaviour/MovementBehaviour;visitNewPosition(Lcom/simibubi/create/content/contraptions/behaviour/MovementContext;Lnet/minecraft/core/BlockPos;)V"))
+    private void redirectVisitNewPosition(MovementBehaviour instance, MovementContext context, BlockPos pos, Operation<Void> operation) {
+        getTargetPos(instance, context, pos, structureBlockInfo, operation);
     }
 
     //Region end

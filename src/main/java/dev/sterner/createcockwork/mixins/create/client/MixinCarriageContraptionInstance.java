@@ -4,6 +4,8 @@ import com.jozufozu.flywheel.api.MaterialManager;
 import com.jozufozu.flywheel.backend.instancing.entity.EntityInstance;
 import com.jozufozu.flywheel.util.AnimationTickHolder;
 import com.jozufozu.flywheel.util.transform.TransformStack;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import com.simibubi.create.content.trains.entity.CarriageContraptionInstance;
@@ -30,11 +32,11 @@ public abstract class MixinCarriageContraptionInstance extends EntityInstance {
         super(materialManager, entity);
     }
 
-    @Redirect(remap = false,
+    @WrapOperation(remap = false,
             method = "beginFrame", at = @At(value = "INVOKE",
             target = "Lcom/jozufozu/flywheel/util/transform/TransformStack;translate(Lorg/joml/Vector3f;)Ljava/lang/Object;")
     )
-    private Object redirectTranslate(final TransformStack instance, final Vector3f vector3f) {
+    private Object redirectTranslate(final TransformStack instance, final Vector3f vector3f, Operation<Void> operation) {
 
         final float partialTicks = AnimationTickHolder.getPartialTicks();
         final Level level = this.world;
@@ -62,7 +64,8 @@ public abstract class MixinCarriageContraptionInstance extends EntityInstance {
             ((PoseStack) instance).last().pose().set(VectorConversionsMCKt.mul(renderMatrix, v));
 
         } else {
-            instance.translate(vector3f);
+            return operation.call(instance, vector3f);
+            //instance.translate(vector3f);
         }
         return null;
     }

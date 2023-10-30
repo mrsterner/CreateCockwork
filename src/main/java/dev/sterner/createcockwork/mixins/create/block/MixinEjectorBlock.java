@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create.block;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.logistics.depot.EjectorBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -21,10 +23,10 @@ public abstract class MixinEjectorBlock {
         return instance.getOnPos();
     }
 
-    @Redirect(method = "updateEntityAfterFallOn", at = @At(
+    @WrapOperation(method = "updateEntityAfterFallOn", at = @At(
             value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;position()Lnet/minecraft/world/phys/Vec3;"
     ))
-    private Vec3 redirectEntityPosition(Entity instance) {
+    private Vec3 redirectEntityPosition(Entity instance, Operation<Vec3> operation) {
         Vec3 result = instance.position();
         if (VSGameUtilsKt.getShipManagingPos(instance.level(), instance.position()) == null) {
             Ship ship = VSGameUtilsKt.getShipManagingPos(instance.level(), instance.getOnPos());
@@ -32,22 +34,23 @@ public abstract class MixinEjectorBlock {
                 Vector3d tempVec = VectorConversionsMCKt.toJOML(result);
                 ship.getWorldToShip().transformPosition(tempVec, tempVec);
                 result = VectorConversionsMCKt.toMinecraft(tempVec);
+                return result;
             }
         }
-        return result;
+        return operation.call(instance);
     }
 
-    @Redirect(method = "updateEntityAfterFallOn", at = @At(
+    @WrapOperation(method = "updateEntityAfterFallOn", at = @At(
             value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setPos(DDD)V"
     ))
-    private void redirectSetPos(Entity instance, double x, double y, double z) {
+    private void redirectSetPos(Entity instance, double x, double y, double z, Operation<Void> operation) {
         Ship ship = VSGameUtilsKt.getShipManagingPos(instance.level(), instance.getOnPos());
         if (ship != null) {
             Vector3d tempVec = new Vector3d();
             ship.getTransform().getShipToWorld().transformPosition(x, y, z, tempVec);
             instance.setPos(tempVec.x, tempVec.y, tempVec.z);
         } else {
-            instance.setPos(x, y, z);
+            operation.call(instance, x, y, z);
         }
     }
 }

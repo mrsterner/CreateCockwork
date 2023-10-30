@@ -1,6 +1,8 @@
 package dev.sterner.createcockwork.mixins.create.client;
 
 import com.jozufozu.flywheel.util.transform.TransformStack;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.contraptions.OrientedContraptionEntity;
@@ -25,11 +27,10 @@ public class MixinOrientedContraptionEntity {
         return Vec3.ZERO;
     }
 
-    @Redirect(remap = false, method = "applyLocalTransforms", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/contraptions/OrientedContraptionEntity;repositionOnCart(Lcom/mojang/blaze3d/vertex/PoseStack;FLnet/minecraft/world/entity/Entity;)V"))
-    private void redirectRepositionOnCart(OrientedContraptionEntity instance, PoseStack matrixStack, float partialTicks, Entity ridingEntity) {
+    @WrapOperation(remap = false, method = "applyLocalTransforms", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/contraptions/OrientedContraptionEntity;repositionOnCart(Lcom/mojang/blaze3d/vertex/PoseStack;FLnet/minecraft/world/entity/Entity;)V"))
+    private void redirectRepositionOnCart(OrientedContraptionEntity instance, PoseStack matrixStack, float partialTicks, Entity ridingEntity, Operation<Void> operation) {
 
-        Vec3 cartPos = getCartOffset(partialTicks, ridingEntity);
-        if (cartPos != Vec3.ZERO) matrixStack.translate(cartPos.x, cartPos.y, cartPos.z);
+        operation.call(instance, matrixStack, partialTicks, ridingEntity);
 
         ClientShip ship = (ClientShip) VSGameUtilsKt.getShipManagingPos(instance.getCommandSenderWorld(), ridingEntity.blockPosition());
         if (ship != null) {
@@ -39,9 +40,10 @@ public class MixinOrientedContraptionEntity {
         }
     }
 
-    @Redirect(method = "repositionOnContraption", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(DDD)V", ordinal = 0))
-    private void redirectTranslate(final PoseStack instance, final double pose, final double d, final double e) {
-        instance.translate(pose, d, e);
+    @WrapOperation(method = "repositionOnContraption", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(DDD)V", ordinal = 0))
+    private void redirectTranslate(final PoseStack instance, final double pose, final double d, final double e, Operation<Void> operation) {
+        //instance.translate(pose, d, e);
+        operation.call(instance, pose, d, e);
 
         ClientShip ship = (ClientShip) VSGameUtilsKt.getShipManagingPos(Minecraft.getInstance().level, ((AbstractContraptionEntity) (Object) this).getVehicle().blockPosition());
         if (ship != null) {
@@ -51,8 +53,8 @@ public class MixinOrientedContraptionEntity {
         }
     }
 
-    @Redirect(remap = false, method = "getContraptionOffset", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;getPassengerPosition(Lnet/minecraft/world/entity/Entity;F)Lnet/minecraft/world/phys/Vec3;"))
-    private Vec3 redirectGetPassengerPosition(AbstractContraptionEntity instance, Entity passenger, float partialTicks) {
+    @WrapOperation(remap = false, method = "getContraptionOffset", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/content/contraptions/AbstractContraptionEntity;getPassengerPosition(Lnet/minecraft/world/entity/Entity;F)Lnet/minecraft/world/phys/Vec3;"))
+    private Vec3 redirectGetPassengerPosition(AbstractContraptionEntity instance, Entity passenger, float partialTicks, Operation<Vec3> operation) {
         Vec3 result = instance.getPassengerPosition(passenger, partialTicks);
 
         ClientShip ship = (ClientShip) VSGameUtilsKt.getShipManagingPos(instance.getCommandSenderWorld(), instance.position());
@@ -60,7 +62,8 @@ public class MixinOrientedContraptionEntity {
             Vector3d dest = new Vector3d();
             ship.getRenderTransform().getShipToWorld().transformPosition(VectorConversionsMCKt.toJOML(result), dest);
             result = VectorConversionsMCKt.toMinecraft(dest);
+            return result;
         }
-        return result;
+        return operation.call(instance, passenger, partialTicks);
     }
 }

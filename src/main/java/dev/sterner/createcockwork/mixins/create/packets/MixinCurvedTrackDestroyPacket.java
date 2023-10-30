@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create.packets;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.trains.track.CurvedTrackDestroyPacket;
 import com.simibubi.create.content.trains.track.TrackBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -22,21 +24,22 @@ public abstract class MixinCurvedTrackDestroyPacket {
     @Unique
     private Level world;
 
-    @Redirect(
+    @WrapOperation(
             method = "applySettings(Lnet/minecraft/server/level/ServerPlayer;Lcom/simibubi/create/content/trains/track/TrackBlockEntity;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/core/BlockPos;closerThan(Lnet/minecraft/core/Vec3i;D)Z"
             )
     )
-    private boolean e$redirectCloserThan(final BlockPos instance, final Vec3i vec3i, final double v) {
-        BlockPos blockPos = instance;
+    private boolean e$redirectCloserThan(final BlockPos instance, final Vec3i vec3i, final double v, Operation<Boolean> operation) {
+        BlockPos blockPos;
         if (VSGameUtilsKt.isBlockInShipyard(this.world, instance)) {
             final Ship ship = VSGameUtilsKt.getShipManagingPos(this.world, instance);
             final Vector3d tempVec = VSGameUtilsKt.toWorldCoordinates(ship, instance);
             blockPos = new BlockPos((int) tempVec.x, (int) tempVec.y, (int) tempVec.z);
+            return blockPos.closerThan(vec3i, v);
         }
-        return blockPos.closerThan(vec3i, v);
+        return operation.call(instance, vec3i, v);
     }
 
     @Inject(remap = false,

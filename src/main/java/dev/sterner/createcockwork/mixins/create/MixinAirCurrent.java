@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.kinetics.fan.AirCurrent;
 import com.simibubi.create.content.kinetics.fan.IAirCurrentSource;
 import com.simibubi.create.foundation.utility.VecHelper;
@@ -95,14 +97,16 @@ public abstract class MixinAirCurrent {
         }
     }
 
-    @Redirect(method = "tickAffectedEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/AABB;intersects(Lnet/minecraft/world/phys/AABB;)Z"))
-    private boolean redirectIntersects(AABB instance, AABB other) {
+    @WrapOperation(method = "tickAffectedEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/AABB;intersects(Lnet/minecraft/world/phys/AABB;)Z"))
+    private boolean redirectIntersects(AABB instance, AABB other, Operation<Boolean> operation) {
         Ship ship = getShip();
         if (ship != null) {
             AABBd thisAABB = VectorConversionsMCKt.toJOML(instance);
             thisAABB.transform(ship.getWorldToShip());
             return other.intersects(thisAABB.minX, thisAABB.minY, thisAABB.minZ, thisAABB.maxX, thisAABB.maxY, thisAABB.maxZ);
-        } else return instance.intersects(other);
+        } else {
+            return operation.call(instance, other);
+        }
     }
 
     @Inject(
@@ -123,10 +127,10 @@ public abstract class MixinAirCurrent {
         this.acceleration = acceleration;
     }
 
-    @Redirect(method = "tickAffectedEntities",
+    @WrapOperation(method = "tickAffectedEntities",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V")
     )
-    private void redirectSetDeltaMovement(Entity instance, Vec3 motion) {
+    private void redirectSetDeltaMovement(Entity instance, Vec3 motion, Operation<Void> operation) {
         Ship ship = getShip();
         if (ship != null) {
             Vec3 previousMotion = instance.getDeltaMovement();
@@ -135,19 +139,20 @@ public abstract class MixinAirCurrent {
             double zIn = Mth.clamp(transformedFlow.z * acceleration - previousMotion.z, -maxAcceleration, maxAcceleration);
             instance.setDeltaMovement(previousMotion.add(new Vec3(xIn, yIn, zIn).scale(1 / 8f)));
         } else {
-            instance.setDeltaMovement(motion);
+            operation.call(instance, motion);
         }
     }
 
-    @Redirect(remap = false, method = "tickAffectedEntities", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/foundation/utility/VecHelper;getCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"), allow = 1)
-    private Vec3 redirectGetCenterOf(Vec3i pos) {
+    @WrapOperation(remap = false, method = "tickAffectedEntities", at = @At(value = "INVOKE", target = "Lcom/simibubi/create/foundation/utility/VecHelper;getCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;"), allow = 1)
+    private Vec3 redirectGetCenterOf(Vec3i pos, Operation<Vec3> operation) {
         Ship ship = getShip();
         Vec3 result = VecHelper.getCenterOf(pos);
         if (ship != null && this.source.getAirCurrentWorld() != null) {
             Vector3d tempVec = new Vector3d();
             ship.getTransform().getShipToWorld().transformPosition(result.x, result.y, result.z, tempVec);
             result = VectorConversionsMCKt.toMinecraft(tempVec);
+            return result;
         }
-        return result;
+        return operation.call(pos);
     }
 }

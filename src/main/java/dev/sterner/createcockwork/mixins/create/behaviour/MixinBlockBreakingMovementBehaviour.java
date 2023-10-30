@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create.behaviour;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
 import com.simibubi.create.content.kinetics.base.BlockBreakingMovementBehaviour;
 import net.minecraft.world.entity.Entity;
@@ -49,14 +51,17 @@ public class MixinBlockBreakingMovementBehaviour {
         movementContext = context;
     }
 
-    @Redirect(method = "throwEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V"))
-    private void redirectSetDeltaMovement(final Entity instance, Vec3 motion) {
+    @WrapOperation(method = "throwEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V"))
+    private void redirectSetDeltaMovement(final Entity instance, Vec3 motion, Operation<Void> operation) {
         if (movementContext != null && VSGameUtilsKt.isBlockInShipyard(movementContext.world, movementContext.contraption.anchor)) {
             Ship ship = VSGameUtilsKt.getShipManagingPos(movementContext.world, movementContext.contraption.anchor);
-            if (ship != null)
+            if (ship != null) {
                 motion = VectorConversionsMCKt.toMinecraft(ship.getShipToWorld().transformDirection(VectorConversionsMCKt.toJOML(motion), new Vector3d()));
+                instance.setDeltaMovement(motion);
+            }
+        } else {
+            operation.call(instance, motion);
         }
-        instance.setDeltaMovement(motion);
     }
     //Region end
 }

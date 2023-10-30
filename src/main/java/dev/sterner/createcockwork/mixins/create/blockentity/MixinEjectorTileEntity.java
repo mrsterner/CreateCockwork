@@ -1,5 +1,7 @@
 package dev.sterner.createcockwork.mixins.create.blockentity;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.logistics.depot.EjectorBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -53,10 +55,10 @@ public abstract class MixinEjectorTileEntity {
         return instance.getEntitiesOfClass(aClass, VSGameUtilsKt.transformAabbToWorld(instance, aabb));
     }
 
-    @Redirect(method = "activateDeferred", at = @At(
+    @WrapOperation(method = "activateDeferred", at = @At(
             value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setPos(DDD)V"
     ))
-    private void redirectSetPos(Entity instance, double x, double y, double z) {
+    private void redirectSetPos(Entity instance, double x, double y, double z, Operation<Void> operation) {
         Ship ship = VSGameUtilsKt.getShipManagingPos(instance.level(), ((EjectorBlockEntity) (Object) this).getBlockPos());
         if (ship != null) {
             BlockPos temp = ((EjectorBlockEntity) (Object) this).getBlockPos();
@@ -64,7 +66,7 @@ public abstract class MixinEjectorTileEntity {
             ship.getTransform().getShipToWorld().transformPosition(tempVec, tempVec);
             instance.setPos(tempVec.x, tempVec.y, tempVec.z);
         } else {
-            instance.setPos(x, y, z);
+            operation.call(instance, x, y, z);
         }
     }
 }

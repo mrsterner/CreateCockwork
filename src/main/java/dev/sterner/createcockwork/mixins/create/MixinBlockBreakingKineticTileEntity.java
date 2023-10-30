@@ -1,6 +1,8 @@
 package dev.sterner.createcockwork.mixins.create;
 
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.simibubi.create.content.kinetics.base.BlockBreakingKineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -26,7 +28,7 @@ public abstract class MixinBlockBreakingKineticTileEntity {
     @Shadow
     protected abstract BlockPos getBreakingPos();
 
-    @Redirect(
+    @WrapOperation(
             method = {"tick"},
             at = @At(
                     value = "INVOKE",
@@ -34,7 +36,7 @@ public abstract class MixinBlockBreakingKineticTileEntity {
             ),
             remap = false
     )
-    private BlockPos getBreakingBlockPos(BlockBreakingKineticBlockEntity self) {
+    private BlockPos getBreakingBlockPos(BlockBreakingKineticBlockEntity self, Operation<BlockPos> operation) {
         BlockPos orig = this.getBreakingPos();
         Ship ship = VSGameUtilsKt.getShipManagingPos(self.getLevel(), self.getBlockPos());
         Vec3 origin;
@@ -49,6 +51,11 @@ public abstract class MixinBlockBreakingKineticTileEntity {
 
         Vec3 diff = target.subtract(origin);
         BlockHitResult result = self.getLevel().clip(new ClipContext(origin.add(diff.scale(0.4)), target.add(diff.scale(0.2)), Block.COLLIDER, Fluid.NONE, null));
-        return result.getType() == Type.MISS ? orig : result.getBlockPos();
+
+        if (ship != null) {
+            return result.getType() == Type.MISS ? orig : result.getBlockPos();
+        } else {
+            return operation.call(self);
+        }
     }
 }
